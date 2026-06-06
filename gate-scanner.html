@@ -2,12 +2,12 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Corridor Access Scanner</title>
+    <title>Corridor Access Security Point</title>
     <link rel="stylesheet" href="style.css">
     <style>
         .layout-container { display: flex; gap: 30px; justify-content: center; align-items: flex-start; }
         
-        /* Simulated Face ID Display Box */
+        /* Simulated Face ID Display Box Layout */
         .scanner-display {
             width: 320px;
             height: 240px;
@@ -28,13 +28,13 @@
         .face-silhouette {
             width: 100px;
             height: 120px;
-            border: 2px dashed rgba(255, 255, 255, 0.2);
+            border: 2px dashed rgba(161, 198, 234, 0.2);
             border-radius: 50% 50% 45% 45%;
             position: relative;
             transition: all 0.3s ease;
         }
 
-        /* Moving Laser Scanning Line */
+        /* Moving Laser Scanning Beam line */
         .scan-line {
             position: absolute;
             top: 0;
@@ -46,7 +46,7 @@
             opacity: 0;
         }
 
-        /* Dynamic Scanner States */
+        /* Dynamic Scanner Functional States */
         .scanner-display.scanning {
             border-color: var(--accent-blue);
             background: #09192f;
@@ -112,7 +112,7 @@
         <div class="tagline">One card. Connected campus.</div>
         <div class="nav-links">
             <a href="admin-panel.html" class="nav-item">8. Admin Panel</a>
-            <a href="gate-scanner.html" class="nav-item active">1. Corridor Scanner</a>
+            <a href="gate-scanner.html" class="nav-item active">1. Gate Scanner</a>
             <a href="canteen.html" class="nav-item">4a. Canteen POS</a>
             <a href="canteen-dashboard.html" class="nav-item">4b. Canteen Management</a>
             <a href="library-checkout.html" class="nav-item">2. Library Checkout</a>
@@ -122,21 +122,85 @@
             <a href="class-page.html" class="nav-item">7. Class Page</a>
         </div>
     </div>
-    <div class="main-content">
-        <h1>Corridor Access Security Point</h1>
+    
+    <div class="main-content" style="padding-bottom: 180px;">
+        <h1>RFID Corridor Biometric Security Gate</h1>
         <div class="layout-container">
-            <div class="card" style="width: 480px; min-height: 200px;">
-                <h2>Biometric Verification Terminal</h2>
+            <div class="card" style="width: 550px; min-height: 360px; display: flex; flex-direction: column; gap: 15px;">
+                <h2>Integrated Security Scanner Terminal</h2>
                 
                 <div id="scanner-hub" class="scanner-display">
                     <div class="scan-line"></div>
                     <div class="face-silhouette"></div>
                 </div>
 
-                <p style="margin-top: 15px; color: var(--text-muted); text-align: center;">Approach scanner: Tap smart card</p>
-                <p id="gate-msg" style="font-weight:bold; color:var(--text-muted); text-align:center; margin-top:15px; min-height:24px;">Awaiting card detection event...</p>
+                <p style="margin-top: 10px; color: var(--text-muted); text-align: center; font-size: 0.9rem;">Approach perimeter hub zone and tap card module</p>
+                <p id="gate-checkout-msg" style="font-weight:bold; color:var(--text-muted); text-align:center; margin-top:10px; min-height:24px;">Awaiting physical peripheral card trigger signal...</p>
             </div>
         </div>
     </div>
 
-    <div class
+    <div class="fixed-hardware-terminal">
+        <h3 style="font-size:0.9rem; margin:0; color:var(--accent-light); display:flex; align-items:center; gap:8px;">
+            <div class="brand-pulse" style="width:8px; height:8px;"></div> 📟 Access Control Scanner
+        </h3>
+        <p style="font-size:0.75rem; color:var(--text-muted); margin: 4px 0 8px 0;">Tap card profile to execute operation:</p>
+        <div class="simulation-grid">
+            <button class="btn-card-tap" onclick="triggerGateCardScan('Ahmad Ali', 'Student')">🧑 Ahmad (Std)</button>
+            <button class="btn-card-tap" onclick="triggerGateCardScan('Fatima Al-Thani', 'Student')">👩 Fatima (Std)</button>
+            <button class="btn-card-tap" onclick="triggerGateCardScan('Zayed Al-Kuwari', 'Student')">👦 Zayed (Std)</button>
+            <button class="btn-card-tap" onclick="triggerGateCardScan('Mr. John', 'Teacher')">👨 Mr. John (Tchr)</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { updateCloudField, logToAdminCloud, initializeDatabase } from "./shared.js";
+        await initializeDatabase();
+
+        window.triggerGateCardScan = async function(userName, userRole) {
+            const statusMsg = document.getElementById('gate-checkout-msg');
+            const hubEl = document.getElementById('scanner-hub');
+
+            // Step 1: Initialize Scan Loop Phase 
+            statusMsg.innerText = "⌛ Scanning Biometrics: Running neural map validation...";
+            statusMsg.style.color = "white";
+            hubEl.className = "scanner-display scanning";
+
+            // Delay 1.5 seconds to simulate complex, edge-AI computer vision processing
+            await new Promise(resolve => setTimeout(resolve, 1500));
+
+            // Demo Scenario Option: Let's block Zayed to demonstrate active anti-theft security logic
+            const isAuthorized = (userName !== "Zayed Al-Kuwari");
+
+            if (isAuthorized) {
+                // SUCCESS STATE
+                hubEl.className = "scanner-display approved";
+                statusMsg.innerHTML = `<span style="color:var(--accent-green)">✅ Biometrics Verified! Welcome, ${userName}. Entrance Logged.</span>`;
+                
+                if (userName === "Ahmad Ali") {
+                    await updateCloudField('ahmadAttendance', 'Present');
+                } else if (userName === "Mr. John") {
+                    await updateCloudField('johnAttendance', 'Present');
+                }
+
+                await logToAdminCloud(userName, userRole, "Corridor Entry", "Main Corridor Gate Hub", "badge-green", "Authorized Face Match");
+            } else {
+                // FAILURE / STOLEN CARD SIMULATION STATE
+                hubEl.className = "scanner-display denied";
+                statusMsg.innerHTML = `<span style="color:#ff4d4d">❌ SECURITY BREACH: Biometric Identity Mismatch Detected!</span>`;
+                
+                await logToAdminCloud(userName, userRole, "Breach Attempt Flagged", "Main Corridor Gate Hub", "badge-red", "Biometric Mismatch");
+            }
+
+            // Step 3: Automatically return scanner system layout back to normal loop tracking after 3.5 seconds
+            setTimeout(() => {
+                if(!hubEl.classList.contains('scanning')) {
+                    hubEl.className = "scanner-display";
+                    statusMsg.innerText = "Awaiting physical peripheral card trigger signal...";
+                    statusMsg.style.color = "var(--text-muted)";
+                }
+            }, 3500);
+        }
+    </script>
+</body>
+</html>
