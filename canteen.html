@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Canteen POS Terminal - Campus Pulse</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .canteen-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+            margin-top: 20px;
+        }
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 15px;
+        }
+        .menu-item-card {
+            background: var(--panel-dark);
+            border: 1px solid rgba(161, 198, 234, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .menu-item-card:hover {
+            border-color: var(--accent-blue);
+            transform: translateY(-2px);
+            background: rgba(161, 198, 234, 0.02);
+        }
+        .menu-item-price {
+            color: var(--accent-green);
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-top: 5px;
+        }
+        .menu-item-stock {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            margin-top: 4px;
+        }
+        
+        .tray-panel {
+            background: var(--panel-dark);
+            border-radius: 12px;
+            border: 1px solid rgba(161, 198, 234, 0.1);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-self: flex-start;
+        }
+        .cart-list {
+            list-style: none;
+            padding: 0;
+            margin: 15px 0;
+            max-height: 240px;
+            overflow-y: auto;
+        }
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-size: 0.9rem;
+        }
+        .cart-total-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-top: 2px solid rgba(161,198,234,0.2);
+            padding-top: 15px;
+            margin-top: auto;
+            margin-bottom: 15px;
+        }
+
+        .fixed-hardware-terminal {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 320px;
+            background: var(--panel-dark);
+            border: 2px solid var(--accent-blue);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+            border-radius: 12px;
+            padding: 15px;
+            z-index: 9999;
+        }
+        .simulation-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .btn-card-tap {
+            background-color: var(--bg-dark);
+            border: 1px solid var(--accent-light);
+            color: var(--accent-light);
+            padding: 12px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            text-align: left;
+            transition: all 0.2s ease;
+        }
+        .btn-card-tap:hover {
+            background-color: var(--accent-blue);
+            color: white;
+            border-color: var(--accent-blue);
+        }
+
+        .pin-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+        }
+        .pin-modal-box {
+            background: var(--panel-dark);
+            border: 2px solid var(--accent-blue);
+            border-radius: 16px;
+            padding: 25px;
+            width: 300px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.7);
+            text-align: center;
+        }
+        .pin-display-screen {
+            background: var(--bg-dark);
+            border: 1px solid rgba(161,198,234,0.2);
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 2rem;
+            font-family: monospace;
+            letter-spacing: 6px;
+            color: var(--accent-green);
+            margin: 15px 0;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .atm-keyboard-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+        .atm-btn {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(161,198,234,0.1);
+            color: white;
+            font-size: 1.25rem;
+            font-weight: bold;
+            padding: 15px 0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.1s ease;
+        }
+        .atm-btn:hover {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+        }
+        .atm-btn.clear-btn { background: #df4759; color: white; font-size: 0.9rem; }
+        .atm-btn.clear-btn:hover { background: #c0392b; }
+        .atm-btn.enter-btn { background: var(--accent-green); color: white; font-size: 0.9rem; }
+        .atm-btn.enter-btn:hover { background: #0e9f6e; }
+        
+        .alert-lockout-msg {
+            background: rgba(223, 71, 89, 0.1);
+            border: 1px dashed #df4759;
+            color: #df4759;
+            border-radius: 6px;
+            padding: 10px;
+            font-size: 0.85rem;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="brand"><div class="brand-pulse"></div>Campus Pulse</div>
+        <div class="tagline">One card. Connected campus.</div>
+        <div class="nav-links">
+            <a href="admin-panel.html" class="nav-item">8. Admin Panel</a>
+            <a href="gate-scanner.html" class="nav-item">1. Gate Scanner</a>
+            <a href="canteen.html" class="nav-item active">4a. Canteen POS</a>
+            <a href="canteen-dashboard.html" class="nav-item">4b. Canteen Management</a>
+            <a href="library-checkout.html" class="nav-item">2. Library Checkout</a>
+            <a href="library-dashboard.html" class="nav-item">3. Library Inventory</a>
+            <a href="teacher-profile.html" class="nav-item">5. Teacher Profile</a>
+            <a href="parent-portal.html" class="nav-item">6. Parent Portal</a>
+            <a href="class-page.html" class="nav-item">7. Class Page</a>
+        </div>
+    </div>
+
+    <div class="main-content" style="padding-bottom: 160px;">
+        <h1>Canteen POS Register</h1>
+        
+        <div class="canteen-grid">
+            <div>
+                <h2 style="margin-bottom:15px; color:var(--accent-light);">Available Menu Items</h2>
+                <div id="lockout-notice-banner" class="alert-lockout-msg">
+                    🔒 SYSTEM LOCKED: Please swipe or scan an authorized Smart Card terminal profile below before compiling order traits.
+                </div>
+                <div class="menu-grid" id="pos-menu-container">
+                    <p style="color:var(--text-muted);">Syncing live menu items...</p>
+                </div>
+            </div>
+
+            <div class="tray-panel">
+                <h2 style="margin:0; font-size:1.1rem; display:flex; align-items:center; gap:8px;">
+                    Checkout Serving Tray
+                </h2>
+                <div style="margin-top: 10px; padding-bottom: 12px; border-bottom: 1px solid rgba(161,198,234,0.15);">
+                    <p style="font-size:0.85rem; color:var(--text-muted); margin: 0;">Customer Active: <strong id="active-student-display" style="color:var(--accent-blue);">No Card Scanned</strong></p>
+                    <p style="font-size:0.85rem; color:var(--text-muted); margin: 6px 0 0 0;">Total Card Balance: <strong id="active-balance-display" style="color:var(--accent-green);">-- QAR</strong></p>
+                    <p style="font-size:0.85rem; color:var(--text-muted); margin: 6px 0 0 0;">How much more they can spend today: <strong id="active-limit-display" style="color:var(--accent-light);">-- QAR</strong></p>
+                </div>
+                
+                <ul class="cart-list" id="tray-items-list">
+                    <li style="text-align:center; color:var(--text-muted); padding-top:40px;">Tray is completely empty...</li>
+                </ul>
+
+                <div class="cart-total-row">
+                    <span>Total Amount:</span>
+                    <span id="tray-total-display" style="color:var(--accent-light);">0 QAR</span>
+                </div>
+
+                <div style="display:flex; flex-direction:column; gap:10px;">
+                    <button id="btn-pay-action" class="btn" style="background-color:var(--accent-green); width:100%; font-weight:bold; letter-spacing:0.5px; opacity:0.4; cursor:not-allowed;" onclick="openPaymentPinModal()" disabled>💳 Process Payment</button>
+                    <button class="btn" style="background-color:var(--bg-dark); border:1px solid rgba(255,255,255,0.1);" onclick="clearTray()">Clear Tray</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="fixed-hardware-terminal">
+        <h3 style="font-size:0.9rem; margin:0; color:var(--accent-light); display:flex; align-items:center; gap:8px;">
+            <div class="brand-pulse" style="width:8px; height:8px;"></div> Smart Card Emulator Terminal
+        </h3>
+        <p style="font-size:0.75rem; color:var(--text-muted); margin: 4px 0 8px 0;">Step 1: Tap card to identify user limits:</p>
+        
+        <div class="simulation-grid">
+            <button class="btn-card-tap" onclick="triggerCardScan('Ahmad Ali', 'Student')">Ahmad (Std)</button>
+            <button class="btn-card-tap" onclick="triggerCardScan('Fatima Al-Thani', 'Student')">Fatima (Std)</button>
+            <button class="btn-card-tap" onclick="triggerCardScan('Zayed Al-Kuwari', 'Student')">Zayed (Std)</button>
+            <button class="btn-card-tap" onclick="triggerCardScan('Mr. John', 'Teacher')">Mr. John (Tchr)</button>
+        </div>
+    </div>
+
+    <div class="pin-modal-overlay" id="atm-pin-modal">
+        <div class="pin-modal-box">
+            <h3 style="margin:0; color:white; font-size:1.1rem;">Security Verification</h3>
+            <p style="font-size:0.75rem; color:var(--text-muted); margin:4px 0 0 0;">Enter Card PIN for: <strong id="pin-modal-user-label" style="color:var(--accent-light);"></strong></p>
+            
+            <div class="pin-display-screen" id="pin-dots-output"></div>
+
+            <div class="atm-keyboard-grid">
+                <button class="atm-btn" onclick="pressPinKey('1')">1</button>
+                <button class="atm-btn" onclick="pressPinKey('2')">2</button>
+                <button class="atm-btn" onclick="pressPinKey('3')">3</button>
+                <button class="atm-btn" onclick="pressPinKey('4')">4</button>
+                <button class="atm-btn" onclick="pressPinKey('5')">5</button>
+                <button class="atm-btn" onclick="pressPinKey('6')">6</button>
+                <button class="atm-btn" onclick="pressPinKey('7')">7</button>
+                <button class="atm-btn" onclick="pressPinKey('8')">8</button>
+                <button class="atm-btn" onclick="pressPinKey('9')">9</button>
+                <button class="atm-btn clear-btn" onclick="clearPinInput()">CLEAR</button>
+                <button class="atm-btn" onclick="pressPinKey('0')">0</button>
+                <button class="atm-btn enter-btn" onclick="submitPinAuth()">ENTER</button>
+            </div>
+            
+            <button class="btn" style="margin-top:15px; width:100%; font-size:0.8rem; background:transparent; border:1px solid rgba(255,255,255,0.1);" onclick="closePinModal()">Cancel Transaction</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { fetchCloudState, updateCloudField, logToAdminCloud, initializeDatabase } from "./shared.js";
+        await initializeDatabase();
+
+        let trayCart = [];
+        let liveDbInventory = [];
+        
+        let isCardScanned = false;
+        let pendingStudent = "";
+        let pendingRole = "";
+        let enteredPinBuffer = "";
+        
+        let activeUserBalance = 0;
+        let activeUserSpendLimit = 0;
+
+        // Registry mapping for specific user cards
+        const STUDENT_PIN_REGISTRY = {
+            "Ahmad Ali": "1234",
+            "Fatima Al-Thani": "5678",
+            "Zayed Al-Kuwari": "9012",
+            "Mr. John": "4321"
+        };
+
+        const defaultMenu = [
+            { name: 'Chicken Wrap', price: 15, stock: 25 },
+            { name: 'Healthy Salad Box', price: 12, stock: 15 },
+            { name: 'Fruit Skewer Duo', price: 6, stock: 30 },
+            { name: 'Fresh Apple Juice', price: 5, stock: 40 }
+        ];
+
+        async function syncMenuFromDatabase() {
+            const cloudState = await fetchCloudState();
+            if (cloudState && cloudState.canteenInventory && cloudState.canteenInventory.length > 0) {
+                liveDbInventory = cloudState.canteenInventory;
+            } else {
+                liveDbInventory = defaultMenu;
+                await updateCloudField('canteenInventory', defaultMenu);
+            }
+            
+            if(isCardScanned) {
+                // Look into profiles registry object array mapping
+                const profileObj = cloudState.studentProfiles && cloudState.studentProfiles[pendingStudent] 
+                    ? cloudState.studentProfiles[pendingStudent]
+                    : { balance: 45, limit: 50 }; // fallback default values
+
+                activeUserBalance = profileObj.balance;
+                activeUserSpendLimit = profileObj.limit;
+                
+                document.getElementById('active-balance-display').innerText = `${activeUserBalance} QAR`;
+                document.getElementById('active-limit-display').innerText = `${activeUserSpendLimit} QAR`;
+                
+                document.getElementById('lockout-notice-banner').style.display = "none";
+                document.getElementById('btn-pay-action').disabled = false;
+                document.getElementById('btn-pay-action').style.opacity = "1";
+                document.getElementById('btn-pay-action').style.cursor = "pointer";
+            } else {
+                document.getElementById('active-student-display').innerText = "No Card Scanned";
+                document.getElementById('active-balance-display').innerText = "-- QAR";
+                document.getElementById('active-limit-display').innerText = "-- QAR";
+                document.getElementById('lockout-notice-banner').style.display = "block";
+                document.getElementById('btn-pay-action').disabled = true;
+                document.getElementById('btn-pay-action').style.opacity = "0.4";
+                document.getElementById('btn-pay-action').style.cursor = "not-allowed";
+            }
+
+            renderMenuButtons();
+        }
+
+        function renderMenuButtons() {
+            const container = document.getElementById('pos-menu-container');
+            container.innerHTML = liveDbInventory.map((item, index) => {
+                const stockCount = item.stock !== undefined ? item.stock : 0;
+                const isOutOfStock = stockCount <= 0;
+                const cardMissingLock = !isCardScanned;
+                
+                return `
+                    <div class="menu-item-card" 
+                         style="${isOutOfStock || cardMissingLock ? 'opacity: 0.4; cursor: not-allowed;' : ''}" 
+                         onclick="${isOutOfStock || cardMissingLock ? '' : `addItemToTrayByIndex(${index})`}">
+                        <strong>${item.name}</strong>
+                        <div class="menu-item-price">${item.price} QAR</div>
+                        <div class="menu-item-stock">Stock Available: ${isOutOfStock ? '<span style="color:#df4759;">OUT OF STOCK</span>' : stockCount}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        window.triggerCardScan = async function(userName, userRole) {
+            pendingStudent = userName;
+            pendingRole = userRole;
+            isCardScanned = true;
+            
+            document.getElementById('active-student-display').innerText = userName;
+            await syncMenuFromDatabase();
+            clearTray(); 
+        }
+
+        window.addItemToTrayByIndex = function(index) {
+            if(!isCardScanned) return;
+
+            const targetItem = liveDbInventory[index];
+            const stockLimit = targetItem.stock !== undefined ? targetItem.stock : 0;
+            const currentMatch = trayCart.find(item => item.name === targetItem.name);
+            
+            if(currentMatch) {
+                if(currentMatch.quantity >= stockLimit) {
+                    alert(`Cannot add more. Only ${stockLimit} items available in stock.`);
+                    return;
+                }
+                currentMatch.quantity += 1;
+            } else {
+                if(stockLimit <= 0) return;
+                trayCart.push({ name: targetItem.name, price: targetItem.price, quantity: 1, dbIndex: index });
+            }
+            renderTrayUI();
+        }
+
+        window.clearTray = function() {
+            trayCart = [];
+            renderTrayUI();
+        }
+
+        function renderTrayUI() {
+            const listElement = document.getElementById('tray-items-list');
+            const totalElement = document.getElementById('tray-total-display');
+
+            if(trayCart.length === 0) {
+                listElement.innerHTML = `<li style="text-align:center; color:var(--text-muted); padding-top:40px;">Tray is completely empty...</li>`;
+                totalElement.innerText = "0 QAR";
+                return;
+            }
+
+            let computedSum = 0;
+            listElement.innerHTML = trayCart.map(item => {
+                const rowCost = item.price * item.quantity;
+                computedSum += rowCost;
+                return `
+                    <li class="cart-item">
+                        <div><strong>${item.name}</strong> <small style="color:var(--text-muted)">x${item.quantity}</small></div>
+                        <div style="font-weight:600;">${rowCost} QAR</div>
+                    </li>
+                `;
+            }).join('');
+
+            totalElement.innerText = `${computedSum} QAR`;
+        }
+
+        window.openPaymentPinModal = function() {
+            if (!isCardScanned) {
+                alert("Please tap a card first.");
+                return;
+            }
+            if (trayCart.length === 0) {
+                alert("Your serving tray is currently empty! Please select food options first.");
+                return;
+            }
+
+            enteredPinBuffer = "";
+            document.getElementById('pin-dots-output').innerText = "";
+            document.getElementById('pin-modal-user-label').innerText = pendingStudent;
+            document.getElementById('atm-pin-modal').style.display = "flex";
+        }
+
+        window.closePinModal = function() {
+            document.getElementById('atm-pin-modal').style.display = "none";
+        }
+
+        window.pressPinKey = function(digit) {
+            if (enteredPinBuffer.length < 4) {
+                enteredPinBuffer += digit;
+                document.getElementById('pin-dots-output').innerText = "*".repeat(enteredPinBuffer.length);
+            }
+        }
+
+        window.clearPinInput = function() {
+            enteredPinBuffer = "";
+            document.getElementById('pin-dots-output').innerText = "";
+        }
+
+        window.submitPinAuth = async function() {
+            const correctPin = STUDENT_PIN_REGISTRY[pendingStudent] || "1234";
+
+            if (enteredPinBuffer !== correctPin) {
+                alert("❌ ACCESS DENIED: Invalid Card PIN Code!");
+                clearPinInput();
+                return;
+            }
+
+            closePinModal();
+            
+            const totalOrderCharge = trayCart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            
+            const cloudState = await fetchCloudState();
+            const profileMap = cloudState.studentProfiles || {};
+            const userProfile = profileMap[pendingStudent] || { balance: 45, limit: 50 };
+
+            const actualLiveBalance = userProfile.balance;
+            const actualLiveLimit = userProfile.limit;
+
+            if (totalOrderCharge > actualLiveBalance) {
+                alert(`❌ Transaction Declined: Insufficient Funds!\n\nOrder Cost: ${totalOrderCharge} QAR\nAvailable Card Balance: ${actualLiveBalance} QAR`);
+                return;
+            }
+
+            if (totalOrderCharge > actualLiveLimit) {
+                alert(`⛔ Transaction Blocked: Daily Spending Limit Exceeded!\n\nThis purchase costs ${totalOrderCharge} QAR, but you only have ${actualLiveLimit} QAR remaining in your allowance from your parent.`);
+                return;
+            }
+
+            // Deduct stock levels
+            trayCart.forEach(cartItem => {
+                if(liveDbInventory[cartItem.dbIndex]) {
+                    const currentStock = liveDbInventory[cartItem.dbIndex].stock || 0;
+                    liveDbInventory[cartItem.dbIndex].stock = Math.max(0, currentStock - cartItem.quantity);
+                }
+            });
+
+            // Alter values specifically within this individual's database profile node!
+            userProfile.balance = actualLiveBalance - totalOrderCharge;
+            userProfile.limit = actualLiveLimit - totalOrderCharge;
+            
+            profileMap[pendingStudent] = userProfile;
+            
+            await updateCloudField('studentProfiles', profileMap); 
+            await updateCloudField('canteenInventory', liveDbInventory);
+
+            const invoicePayload = {
+                id: "INV-" + Math.floor(100000 + Math.random() * 900000),
+                customer: pendingStudent, 
+                itemsSummary: trayCart.map(i => `${i.name} (x${i.quantity})`).join(', '),
+                totalCharge: totalOrderCharge
+            };
+
+            const historicalInvoices = cloudState.canteenInvoices || [];
+            historicalInvoices.push(invoicePayload);
+            await updateCloudField('canteenInvoices', historicalInvoices);
+
+            await logToAdminCloud(pendingStudent, pendingRole, `Canteen Expense: ${invoicePayload.itemsSummary}`, `Subtracted ${totalOrderCharge} QAR via Secured POS Terminal`, "badge-red", "Approved");
+
+            trayCart = [];
+            isCardScanned = false;
+            pendingStudent = "";
+            pendingRole = "";
+            
+            renderTrayUI();
+            alert(`✅ Purchase Approved!\n\n${totalOrderCharge} QAR has been debited.\nNew Account Balance: ${userProfile.balance} QAR.\nRemaining Limit Today: ${userProfile.limit} QAR.`);
+            await syncMenuFromDatabase();
+        }
+
+        setInterval(syncMenuFromDatabase, 4000);
+        await syncMenuFromDatabase();
+    </script>
+</body>
+</html>

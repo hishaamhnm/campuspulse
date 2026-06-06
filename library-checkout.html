@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Library RFID Smart Terminal</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .layout-container { display: flex; gap: 30px; justify-content: center; align-items: flex-start; }
+        
+        /* Mode Switch Tabs */
+        .terminal-modes {
+            display: flex;
+            background: var(--panel-dark);
+            border-radius: 8px;
+            padding: 4px;
+            margin-bottom: 15px;
+            border: 1px solid rgba(161,198,234,0.1);
+        }
+        .mode-btn {
+            flex: 1; padding: 10px; border: none; background: transparent;
+            color: var(--text-muted); font-weight: bold; border-radius: 6px;
+            cursor: pointer; transition: all 0.2s ease; font-size: 0.9rem;
+        }
+        .mode-btn.active {
+            background: var(--accent-blue); color: white;
+        }
+
+        /* Pinned Global Hardware Emulation Interface CSS */
+        .fixed-hardware-terminal {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 320px;
+            background: var(--panel-dark);
+            border: 2px solid var(--accent-blue);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            border-radius: 12px;
+            padding: 15px;
+            z-index: 9999;
+        }
+        .simulation-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        .btn-card-tap {
+            background-color: var(--bg-dark); border: 1px solid var(--accent-light);
+            color: var(--accent-light); padding: 12px 10px; border-radius: 6px;
+            cursor: pointer; font-size: 0.85rem; text-align: left; transition: all 0.2s ease;
+        }
+        .btn-card-tap:hover { background-color: var(--accent-blue); color: white; border-color: var(--accent-blue); }
+        
+        .form-select {
+            width: 100%; padding: 12px; border-radius: 6px; 
+            background: var(--bg-dark); border: 1px solid rgba(161,198,234,0.3); 
+            color: white; margin-top: 8px; font-size: 0.95rem; outline: none;
+        }
+        .form-select:focus { border-color: var(--accent-blue); }
+        
+        .date-badge {
+            background: rgba(161, 198, 234, 0.1); padding: 10px; 
+            border-radius: 6px; border: 1px solid rgba(161,198,234,0.2);
+            font-family: monospace; font-size: 0.9rem; color: var(--accent-light);
+            text-align: center; margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="brand"><div class="brand-pulse"></div>Campus Pulse</div>
+        <div class="tagline">One card. Connected campus.</div>
+        <div class="nav-links">
+            <a href="admin-panel.html" class="nav-item">8. Admin Panel</a>
+            <a href="gate-scanner.html" class="nav-item">1. Gate Scanner</a>
+            <a href="canteen.html" class="nav-item">4a. Canteen POS</a>
+            <a href="canteen-dashboard.html" class="nav-item">4b. Canteen Management</a>
+            <a href="library-checkout.html" class="nav-item active">2. Library Checkout</a>
+            <a href="library-dashboard.html" class="nav-item">3. Library Inventory</a>
+            <a href="teacher-profile.html" class="nav-item">5. Teacher Profile</a>
+            <a href="parent-portal.html" class="nav-item">6. Parent Portal</a>
+            <a href="class-page.html" class="nav-item">7. Class Page</a>
+        </div>
+    </div>
+    
+    <div class="main-content" style="padding-bottom: 180px;">
+        <h1>RFID Library Smart Desk</h1>
+        <div class="layout-container">
+            <div class="card" style="width: 550px; min-height: 360px; display: flex; flex-direction: column; gap: 15px;">
+                
+                <div class="terminal-modes">
+                    <button id="modeBorrow" class="mode-btn active" onclick="switchMode('BORROW')">📖 Borrow Asset</button>
+                    <button id="modeReturn" class="mode-btn" onclick="switchMode('RETURN')">↩️ Return Asset</button>
+                </div>
+
+                <h2 id="terminal-title">Scanner Interface Terminal (Borrow)</h2>
+                
+                <div>
+                    <label id="dropdownLabel" style="color: var(--accent-light); font-size: 0.85rem; text-transform: uppercase; font-weight: 600;">Select Book Target Asset</label>
+                    <select id="bookDropdown" class="form-select" onchange="handleDropdownChange()">
+                        <option value="">-- Querying Book Database... --</option>
+                    </select>
+                </div>
+
+                <div id="dateArea" style="display: flex; gap: 20px;">
+                    <div style="flex: 1;">
+                        <span style="font-size: 0.75rem; color: var(--text-muted); display: block; text-transform: uppercase;">Borrowal Date</span>
+                        <div id="borrow-date-display" class="date-badge">YYYY-MM-DD</div>
+                    </div>
+                    <div style="flex: 1;">
+                        <span style="font-size: 0.75rem; color: var(--text-muted); display: block; text-transform: uppercase;">Due Return Date (1 Week)</span>
+                        <div id="return-date-display" class="date-badge" style="color: #f59e0b; border-color: rgba(245,158,11,0.3);">YYYY-MM-DD</div>
+                    </div>
+                </div>
+
+                <p id="lib-checkout-msg" style="font-weight:bold; color:var(--text-muted); text-align:center; margin-top:10px; min-height:24px;">Select a book asset above to proceed...</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="fixed-hardware-terminal">
+        <h3 style="font-size:0.9rem; margin:0; color:var(--accent-light); display:flex; align-items:center; gap:8px;">
+            <div class="brand-pulse" style="width:8px; height:8px;"></div> 📟 Library Terminal Scanner
+        </h3>
+        <p style="font-size:0.75rem; color:var(--text-muted); margin: 4px 0 8px 0;">Tap card profile to execute operation:</p>
+        <div class="simulation-grid">
+            <button class="btn-card-tap" onclick="scanLibraryCard('Ahmad Ali', 'Student')">🧑 Ahmad (Std)</button>
+            <button class="btn-card-tap" onclick="scanLibraryCard('Fatima Al-Thani', 'Student')">👩 Fatima (Std)</button>
+            <button class="btn-card-tap" onclick="scanLibraryCard('Zayed Al-Kuwari', 'Student')">👦 Zayed (Std)</button>
+            <button class="btn-card-tap" onclick="scanLibraryCard('Mr. John', 'Teacher')">👨 Mr. John (Tchr)</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { fetchCloudState, updateLibraryBooksCloud, pushLeaseToCloud, updateCloudField, logToAdminCloud, initializeDatabase } from "./shared.js";
+        await initializeDatabase();
+
+        let cachedBooksArray = [];
+        let cachedLeasesArray = [];
+        let currentMode = "BORROW"; // Global track toggle state
+
+        async function reloadTerminalData() {
+            const data = await fetchCloudState();
+            if (data) {
+                cachedBooksArray = data.libraryBooks || [];
+                cachedLeasesArray = data.libraryLeases || [];
+                populateDropdown();
+            }
+        }
+
+        window.switchMode = function(mode) {
+            currentMode = mode;
+            document.getElementById('modeBorrow').classList.toggle('active', mode === 'BORROW');
+            document.getElementById('modeReturn').classList.toggle('active', mode === 'RETURN');
+            
+            document.getElementById('terminal-title').innerText = mode === 'BORROW' ? "Scanner Interface Terminal (Borrow)" : "Scanner Interface Terminal (Return)";
+            document.getElementById('dropdownLabel').innerText = mode === 'BORROW' ? "Select Book Target Asset" : "Select Active Issued Lease to Check-In";
+            document.getElementById('dateArea').style.display = mode === 'BORROW' ? 'flex' : 'none';
+            
+            document.getElementById('borrow-date-display').innerText = "YYYY-MM-DD";
+            document.getElementById('return-date-display').innerText = "YYYY-MM-DD";
+            document.getElementById('lib-checkout-msg').innerText = "Select an item from the menu layout options...";
+            document.getElementById('lib-checkout-msg').style.color = "var(--text-muted)";
+            
+            populateDropdown();
+        }
+
+        function populateDropdown() {
+            const dropdown = document.getElementById('bookDropdown');
+            dropdown.innerHTML = currentMode === "BORROW" ? 
+                '<option value="">-- Choose Book to Borrow --</option>' : 
+                '<option value="">-- Choose Book Being Returned --</option>';
+
+            if (currentMode === "BORROW") {
+                cachedBooksArray.forEach((book, index) => {
+                    const isOut = book.status === "Checked Out";
+                    dropdown.innerHTML += `<option value="${index}" ${isOut ? "disabled style='color:var(--text-muted);'" : ""}>${book.title} (${book.isbn})${isOut ? " [ON LOAN]" : " (Available)"}</option>`;
+                });
+            } else {
+                if(cachedLeasesArray.length === 0) {
+                    dropdown.innerHTML = '<option value="">❌ No Books Currently Out on Loan</option>';
+                }
+                cachedLeasesArray.forEach((lease, index) => {
+                    dropdown.innerHTML += `<option value="${index}">${lease.bookTitle} (Issued to: ${lease.borrower})</option>`;
+                });
+            }
+        }
+
+        window.handleDropdownChange = function() {
+            const selectedIdx = document.getElementById('bookDropdown').value;
+            const statusMsg = document.getElementById('lib-checkout-msg');
+
+            if (selectedIdx === "") {
+                statusMsg.innerText = "Select an option to proceed...";
+                return;
+            }
+
+            if (currentMode === "BORROW") {
+                const borrowDate = new Date();
+                const returnDate = new Date();
+                returnDate.setDate(borrowDate.getDate() + 7); 
+
+                const formatOption = { year: 'numeric', month: '2-digit', day: '2-digit' };
+                document.getElementById('borrow-date-display').innerText = borrowDate.toLocaleDateString('en-CA', formatOption);
+                document.getElementById('return-date-display').innerText = returnDate.toLocaleDateString('en-CA', formatOption);
+            }
+
+            statusMsg.innerText = "Awaiting physical peripheral card trigger signal...";
+            statusMsg.style.color = "var(--text-muted)";
+        }
+
+        window.scanLibraryCard = async function(userName, userRole) {
+            const selectedIdx = document.getElementById('bookDropdown').value;
+            const statusMsg = document.getElementById('lib-checkout-msg');
+
+            if (selectedIdx === "") {
+                statusMsg.innerText = "⚠️ Validation Error: Select an option before tapping your smart card.";
+                statusMsg.style.color = "#f59e0b";
+                return;
+            }
+
+            statusMsg.innerText = "⌛ Synchronizing data parameters onto cloud nodes...";
+            statusMsg.style.color = "white";
+
+            if (currentMode === "BORROW") {
+                // BORROW HANDLER LOGIC
+                const selectedBook = cachedBooksArray[selectedIdx];
+                const stampedBorrowDate = document.getElementById('borrow-date-display').innerText;
+                const stampedReturnDate = document.getElementById('return-date-display').innerText;
+
+                cachedBooksArray[selectedIdx].status = "Checked Out";
+
+                const leaseObj = {
+                    leaseId: "LSE-" + Math.floor(100000 + Math.random() * 900000),
+                    borrower: userName, role: userRole,
+                    bookTitle: selectedBook.title, isbn: selectedBook.isbn,
+                    borrowDate: stampedBorrowDate, dueDate: stampedReturnDate
+                };
+
+                await updateLibraryBooksCloud(cachedBooksArray);
+                await pushLeaseToCloud(leaseObj);
+                await logToAdminCloud(userName, userRole, `Library Loan: ${selectedBook.title}`, `Due: ${stampedReturnDate}`, 'badge-yellow', 'Checked Out');
+
+                statusMsg.innerHTML = `<span style="color:var(--accent-green)">✅ Checked Out! "${selectedBook.title}" assigned to ${userName}.</span>`;
+            } else {
+                // RETURN HANDLER LOGIC
+                const selectedLease = cachedLeasesArray[selectedIdx];
+                
+                // Find index match inside master books database catalog array
+                const masterBookIdx = cachedBooksArray.findIndex(b => b.isbn === selectedLease.isbn);
+                if(masterBookIdx !== -1) {
+                    cachedBooksArray[masterBookIdx].status = "Available";
+                }
+
+                // Filter out lease node record
+                const remainingLeases = cachedLeasesArray.filter((_, idx) => idx !== parseInt(selectedIdx));
+
+                await updateLibraryBooksCloud(cachedBooksArray);
+                await updateCloudField('libraryLeases', remainingLeases);
+                await logToAdminCloud(userName, userRole, `Library In: ${selectedLease.bookTitle}`, "Terminal Card Tap Return", "badge-green", "Available");
+
+                statusMsg.innerHTML = `<span style="color:var(--accent-green)">✅ Returned Successfully! "${selectedLease.bookTitle}" processed back by ${userName}.</span>`;
+            }
+            
+            document.getElementById('borrow-date-display').innerText = "YYYY-MM-DD";
+            document.getElementById('return-date-display').innerText = "YYYY-MM-DD";
+            await reloadTerminalData();
+        }
+
+        await reloadTerminalData();
+    </script>
+</body>
+</html>

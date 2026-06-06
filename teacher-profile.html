@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Teacher Profiles - Campus Pulse</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .profile-container {
+            max-width: 600px;
+            margin: 20px auto;
+        }
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            border-bottom: 2px solid rgba(161, 198, 234, 0.1);
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+        .profile-avatar {
+            font-size: 4rem;
+            background: rgba(161, 198, 234, 0.1);
+            width: 90px;
+            height: 90px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            border: 2px solid var(--accent-blue);
+        }
+        .profile-details-grid {
+            display: grid;
+            grid-template-columns: 140px 1fr;
+            gap: 15px;
+            font-size: 1rem;
+        }
+        .detail-label {
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+        }
+        .detail-value {
+            color: white;
+            background: rgba(255, 255, 255, 0.02);
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid rgba(161, 198, 234, 0.05);
+        }
+
+        /* FIXED PLACEMENT: Pinned hardware terminal format matched exactly */
+        .fixed-hardware-terminal {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 320px;
+            background: var(--panel-dark);
+            border: 2px solid var(--accent-blue);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+            border-radius: 12px;
+            padding: 15px;
+            z-index: 9999;
+        }
+        .simulation-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .btn-card-tap {
+            background-color: var(--bg-dark);
+            border: 1px solid var(--accent-light);
+            color: var(--accent-light);
+            padding: 12px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            text-align: left;
+            transition: all 0.2s ease;
+        }
+        .btn-card-tap:hover {
+            background-color: var(--accent-blue);
+            color: white;
+            border-color: var(--accent-blue);
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="brand"><div class="brand-pulse"></div>Campus Pulse</div>
+        <div class="tagline">One card. Connected campus.</div>
+        <div class="nav-links">
+            <a href="admin-panel.html" class="nav-item">8. Admin Panel</a>
+            <a href="gate-scanner.html" class="nav-item">1. Gate Scanner</a>
+            <a href="canteen.html" class="nav-item">4a. Canteen POS</a>
+            <a href="canteen-dashboard.html" class="nav-item">4b. Canteen Management</a>
+            <a href="library-checkout.html" class="nav-item">2. Library Checkout</a>
+            <a href="library-dashboard.html" class="nav-item">3. Library Inventory</a>
+            <a href="teacher-profile.html" class="nav-item active">5. Teacher Profile</a>
+            <a href="parent-portal.html" class="nav-item">6. Parent Portal</a>
+            <a href="class-page.html" class="nav-item">7. Class Page</a>
+        </div>
+    </div>
+
+    <div class="main-content" style="padding-bottom: 180px;">
+        <h1>Teacher Personnel Directory</h1>
+        
+        <div class="profile-container">
+            <div class="card" style="min-height: 400px;">
+                <div class="profile-header">
+                    <div class="profile-avatar" id="view-avatar">👨‍🏫</div>
+                    <div>
+                        <h2 id="view-name" style="margin: 0; color: var(--accent-light);">Mr. John Doe</h2>
+                        <p id="view-role-title" style="margin: 4px 0 0 0; color: var(--text-muted); font-size: 0.9rem;">Senior Academic Faculty</p>
+                    </div>
+                </div>
+
+                <div class="profile-details-grid">
+                    <div class="detail-label">Full Name:</div>
+                    <div class="detail-value" id="val-name">Mr. John Doe</div>
+
+                    <div class="detail-label">Class Teacher:</div>
+                    <div class="detail-value" id="val-class">Class 10-A</div>
+
+                    <div class="detail-label">Subject:</div>
+                    <div class="detail-value" id="val-subject">Computer Science</div>
+
+                    <div class="detail-label">Mob Number:</div>
+                    <div class="detail-value" id="val-mobile">+974 5551 2345</div>
+
+                    <div class="detail-label">Employee ID:</div>
+                    <div class="detail-value" id="val-empid">EMP-8821</div>
+
+                    <div class="detail-label">Email Address:</div>
+                    <div class="detail-value" id="val-email">john.doe@campuspulse.edu.qa</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="fixed-hardware-terminal">
+        <h3 style="font-size:0.9rem; margin:0; color:var(--accent-light); display:flex; align-items:center; gap:8px;">
+            <div class="brand-pulse" style="width:8px; height:8px;"></div> 📟 Teacher Directory Terminal
+        </h3>
+        <p style="font-size:0.75rem; color:var(--text-muted); margin: 4px 0 8px 0;">Select teacher card to mount profile view:</p>
+        
+        <div class="simulation-grid">
+            <button class="btn-card-tap" onclick="loadTeacherProfile('john')">👨 Mr. John</button>
+            <button class="btn-card-tap" onclick="loadTeacherProfile('sarah')">👩 Ms. Sarah</button>
+            <button class="btn-card-tap" onclick="loadTeacherProfile('ahmed')">👨 Mr. Ahmed</button>
+            <button class="btn-card-tap" onclick="loadTeacherProfile('fatima')">👩 Mrs. Fatima</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeDatabase } from "./shared.js";
+        await initializeDatabase();
+
+        // Database Registry containing exactly the 4 teachers configured in the terminal grid buttons
+        const TEACHER_DATABASE = {
+            "john": {
+                name: "Mr. John Doe",
+                avatar: "👨‍🏫",
+                classTeacher: "Class 10-A",
+                subject: "Computer Science",
+                mobile: "+974 5551 2345",
+                empNumber: "EMP-8821",
+                email: "john.doe@campuspulse.edu.qa"
+            },
+            "sarah": {
+                name: "Ms. Sarah Jenkins",
+                avatar: "👩‍🏫",
+                classTeacher: "Class 11-B",
+                subject: "Advanced Mathematics",
+                mobile: "+974 5557 9876",
+                empNumber: "EMP-4512",
+                email: "s.jenkins@campuspulse.edu.qa"
+            },
+            "ahmed": {
+                name: "Mr. Ahmed Al-Mansoori",
+                avatar: "👨‍💻",
+                classTeacher: "None (Subject Teacher)",
+                subject: "Physics & Mechanics",
+                mobile: "+974 6663 4411",
+                empNumber: "EMP-9033",
+                email: "a.mansoori@campuspulse.edu.qa"
+            },
+            "fatima": {
+                name: "Mrs. Fatima Al-Kuwari",
+                avatar: "👩‍🔬",
+                classTeacher: "Class 9-C",
+                subject: "Chemistry",
+                mobile: "+974 3334 7722",
+                empNumber: "EMP-1104",
+                email: "f.kuwari@campuspulse.edu.qa"
+            }
+        };
+
+        window.loadTeacherProfile = function(teacherKey) {
+            const data = TEACHER_DATABASE[teacherKey];
+            if (!data) return;
+
+            // Render details into components
+            document.getElementById('view-avatar').innerText = data.avatar;
+            document.getElementById('view-name').innerText = data.name;
+            document.getElementById('view-role-title').innerText = data.subject + " Instructor";
+
+            document.getElementById('val-name').innerText = data.name;
+            document.getElementById('val-class').innerText = data.classTeacher;
+            document.getElementById('val-subject').innerText = data.subject;
+            document.getElementById('val-mobile').innerText = data.mobile;
+            document.getElementById('val-empid').innerText = data.empNumber;
+            document.getElementById('val-email').innerText = data.email;
+        }
+
+        // Initialize display to show Mr. John's profile on document boot sequence
+        loadTeacherProfile('john');
+    </script>
+</body>
+</html>

@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campus Pulse Prototype Hub</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- MASTER SYSTEM NAVIGATION SIDEBAR -->
+    <div class="sidebar">
+        <div class="brand"><div class="brand-pulse"></div>Campus Pulse</div>
+        <div class="tagline">One card. Connected campus.</div>
+        <ul class="nav-links">
+            <li class="nav-item active" onclick="switchPage('admin')">8. Admin Panel</li>
+            <li class="nav-item" onclick="switchPage('gate')">1. Gate Scanner</li>
+            <li class="nav-item" onclick="switchPage('class')">7. Class Page</li>
+            <li class="nav-item" onclick="switchPage('teacher')">5. Teacher Profile</li>
+            <li class="nav-item" onclick="switchPage('parent')">6. Parent Portal</li>
+            <li class="nav-item" onclick="switchPage('canteen')">4. Canteen POS</li>
+            <li class="nav-item" onclick="switchPage('lib-checkout')">2. Library Checkout</li>
+            <li class="nav-item" onclick="switchPage('lib-dashboard')">3. Library Inventory</li>
+        </ul>
+    </div>
+
+    <!-- MAIN DISPLAY CANVAS -->
+    <div class="main-content">
+
+        <!-- PAGE 8: ADMIN MASTER DASHBOARD -->
+        <div id="page-admin" class="page-view active">
+            <h1>Grand Central Admin Panel</h1>
+            <div class="grid-3">
+                <div class="card"><h2>Active Students Present</h2><div class="stat-num" id="admin-present-count">1,842</div></div>
+                <div class="card"><h2>Canteen Revenue Today</h2><div class="stat-num"><span id="admin-revenue">2,450</span> QAR</div></div>
+                <div class="card"><h2>Database Architecture</h2><div class="badge badge-green" style="display:inline-block; margin-top:10px;">● GOOGLE CLOUD SECURE</div></div>
+            </div>
+            <div class="card">
+                <h2>Live Automated System Logs</h2>
+                <table>
+                    <thead>
+                        <tr><th>User</th><th>Role</th><th>Action Context</th><th>Timestamp</th><th>Status</th></tr>
+                    </thead>
+                    <tbody id="admin-log-table">
+                        <!-- Dynamic lines append here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- PAGE 1: GATE SCANNER HARDWARE SIMULATOR -->
+        <div id="page-gate" class="page-view">
+            <h1>Gate Scanner Terminal</h1>
+            <div class="card" style="text-align: center; padding: 50px 20px;">
+                <div style="font-size: 4rem; margin-bottom: 20px;">📟</div>
+                <h2>Ready to Scan Physical RFID Pass</h2>
+                <p style="color: var(--text-muted); margin-bottom: 20px;">Click hardware simulations below to trigger physical card placement:</p>
+                <button class="btn btn-simulate" onclick="triggerGateScan('Ahmad Ali', 'Student', '7:45 AM', 'Late')">⚡ Simulate Student Card Tap (Ahmad Ali - Late Entry)</button>
+                <br><br>
+                <button class="btn btn-simulate" onclick="triggerGateScan('Mr. John', 'Teacher', '7:12 AM', 'Present')">⚡ Simulate Teacher Card Tap (Mr. John - On Time)</button>
+                <h2 id="gate-output" style="margin-top: 30px; min-height: 40px;"></h2>
+            </div>
+        </div>
+
+        <!-- PAGE 7: CLASS PAGE -->
+        <div id="page-class" class="page-view">
+            <h1>Classroom Hub: Grade 10 - Mathematics</h1>
+            <div class="card">
+                <h2>Automated Morning Attendance Sync</h2>
+                <table>
+                    <thead><tr><th>Student ID</th><th>Name</th><th>Assigned Desk</th><th>Gate Scan Status</th></tr></thead>
+                    <tbody>
+                        <tr><td>#8841</td><td>Ahmad Ali</td><td>Row 1, Desk 3</td><td><span class="badge badge-red" id="class-ahmad-status">Absent (No Gate Log)</span></td></tr>
+                        <tr><td>#8842</td><td>Fatima Al-Thani</td><td>Row 3, Desk 1</td><td><span class="badge badge-green">Present (7:05 AM)</span></td></tr>
+                        <tr><td>#8843</td><td>Salem Hassan</td><td>Row 2, Desk 4</td><td><span class="badge badge-green">Present (7:14 AM)</span></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- PAGE 5: TEACHER PROFILE -->
+        <div id="page-teacher" class="page-view">
+            <h1>Teacher Portal: Mr. John</h1>
+            <div class="grid-3">
+                <div class="card"><h2>Morning Attendance Log</h2><div class="stat-num" id="teacher-status-badge" style="color:var(--accent-red); font-size:1.8rem;">NOT CHECKED IN</div></div>
+                <div class="card"><h2>Canteen Card Balance</h2><div class="stat-num">150 QAR</div></div>
+                <div class="card"><h2>Assigned Classes Today</h2><div class="stat-num" style="font-size:1.8rem; color:white;">4 Periods</div></div>
+            </div>
+        </div>
+
+        <!-- PAGE 6: PARENT PORTAL -->
+        <div id="page-parent" class="page-view">
+            <h1>Parent Access Dashboard</h1>
+            <div class="grid-3">
+                <div class="card"><h2>Child Attendance Sync</h2><p>Ahmad Ali:</p><div class="badge badge-red" id="parent-child-status" style="display:inline-block; margin-top:5px;">Absent</div></div>
+                <div class="card"><h2>Canteen Wallet Balance</h2><div class="stat-num"><span id="parent-balance-view">45</span> QAR</div><button class="btn btn-simulate" onclick="addParentCredit()" style="margin-top:10px; padding:6px 12px; font-size:0.85rem;">💳 Add 50 QAR Allowance</button></div>
+                <div class="card"><h2>Daily Spending Limit</h2><div class="stat-num" style="color:white; font-size:1.8rem;">25 QAR Max</div></div>
+            </div>
+        </div>
+
+        <!-- PAGE 4: CANTEEN POINT OF SALE TERMINAL -->
+        <div id="page-canteen" class="page-view">
+            <h1>Canteen Checkout Register</h1>
+            <div style="display: flex; gap: 30px;">
+                <div style="flex: 2;">
+                    <h2>Active Daily Cafeteria Menu</h2>
+                    <div class="canteen-item"><div><strong>Fresh Chicken Sandwich</strong><br><span style="color:var(--text-muted)">15 QAR</span></div><button class="btn" onclick="addToCart(15, 'Chicken Sandwich')">Add</button></div>
+                    <div class="canteen-item"><div><strong>Hot Morning Espresso</strong><br><span style="color:var(--text-muted)">10 QAR</span></div><button class="btn" onclick="addToCart(10, 'Espresso')">Add</button></div>
+                    <div class="canteen-item"><div><strong>Mineral Water</strong><br><span style="color:var(--text-muted)">3 QAR</span></div><button class="btn" onclick="addToCart(3, 'Water')">Add</button></div>
+                </div>
+                <div style="flex: 1;" class="card">
+                    <h2>Active Checkout Basket</h2>
+                    <p style="margin: 20px 0;">Total Due: <strong style="font-size: 1.8rem; color:var(--accent-blue);"><span id="cart-total">0</span> QAR</strong></p>
+                    <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:10px;">Linked Student Card Balance: <span id="canteen-balance-check">45</span> QAR</p>
+                    <button class="btn btn-simulate" style="width: 100%;" onclick="processCanteenPayment()">🛒 Tap Student Card to Deduct</button>
+                    <p id="canteen-status" style="margin-top:15px; text-align:center; font-weight:bold;"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- PAGE 2: LIBRARY CHECKOUT -->
+        <div id="page-lib-checkout" class="page-view">
+            <h1>RFID Library Checkout Pad</h1>
+            <div class="card" style="max-width: 500px; margin: 0 auto; text-align: center;">
+                <h2>Scan Processing Interface</h2>
+                <p style="color: var(--text-muted); margin-bottom:20px;">Simulate physical student lookup & book verification barcode linking:</p>
+                <button class="btn btn-simulate" style="width:100%; margin-bottom:15px;" onclick="simulateLibraryCheckout()">⚡ Tap Ahmad's Card & Scan Book ID</button>
+                <p id="lib-checkout-msg" style="font-weight:bold; color:var(--accent-green);"></p>
+            </div>
+        </div>
+
+        <!-- PAGE 3: LIBRARY INVENTORY DASHBOARD -->
+        <div id="page-lib-dashboard" class="page-view">
+            <h1>Master Library Catalog</h1>
+            <div class="grid-3">
+                <div class="card"><h2>Total Registered Stock</h2><div class="stat-num">5,420 Books</div></div>
+                <div class="card"><h2>Checked Out Today</h2><div class="stat-num" id="lib-out-count">182</div></div>
+                <div class="card"><h2>Overdue Flag Warnings</h2><div class="stat-num" style="color:#f59e0b">14 Books</div></div>
+            </div>
+            <div class="card">
+                <h2>Real-Time Catalog Verification Matrix</h2>
+                <table>
+                    <thead><tr><th>ISBN / Barcode</th><th>Book Title</th><th>Subject Domain</th><th>Ecosystem Status</th></tr></thead>
+                    <tbody>
+                        <tr><td>#978-01340</td><td>Introduction to Calculus</td><td>Mathematics</td><td><span class="badge badge-green">● On Shelf (A3)</span></td></tr>
+                        <tr><td>#978-00611</td><td>The History of Qatar</td><td>Social Studies</td><td><span class="badge badge-green" id="book-qatar-status">● On Shelf (B1)</span></td></tr>
+                        <tr><td>#978-01414</td><td>Classic Arabic Prose</td><td>Literature</td><td><span class="badge badge-yellow">● Reserved Holding</span></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- CENTRAL PROTOTYPE INTERACTIVE LOGIC ENGINE -->
+    <script>
+        // System State Initializers 
+        if(!localStorage.getItem('studentBalance')) localStorage.setItem('studentBalance', '45');
+        if(!localStorage.getItem('canteenRevenue')) localStorage.setItem('canteenRevenue', '2450');
+        
+        let currentCartAmount = 0;
+
+        function updateUIElements() {
+            const bal = localStorage.getItem('studentBalance');
+            document.getElementById('parent-balance-view').innerText = bal;
+            document.getElementById('canteen-balance-check').innerText = bal;
+            document.getElementById('admin-revenue').innerText = localStorage.getItem('canteenRevenue');
+        }
+
+        function switchPage(pageId) {
+            document.querySelectorAll('.page-view').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            document.getElementById('page-' + pageId).classList.add('active');
+            event.target.classList.add('active');
+            updateUIElements();
+        }
+
+        function triggerGateScan(name, role, time, status) {
+            document.getElementById('gate-output').innerHTML = `<span style="color:var(--accent-green)">🟢 Card Detected! Welcome ${name} (${role}). Status logged: ${status} at ${time}.</span>`;
+            
+            // Log entry data directly to the central administrator screen 
+            const tbody = document.getElementById('admin-log-table');
+            const row = `<tr><td><strong>${name}</strong></td><td>${role}</td><td>Gate Entrance Scan</td><td>${time}</td><td><span class="badge ${status=='Late'?'badge-yellow':'badge-green'}">${status}</span></td></tr>`;
+            tbody.innerHTML = row + tbody.innerHTML;
+
+            if(name === 'Ahmad Ali') {
+                document.getElementById('class-ahmad-status').className = "badge badge-yellow";
+                document.getElementById('class-ahmad-status').innerText = "Late Entry (7:45 AM)";
+                document.getElementById('parent-child-status').className = "badge badge-yellow";
+                document.getElementById('parent-child-status').innerText = "Late Entry (7:45 AM)";
+                document.getElementById('admin-present-count').innerText = "1,843";
+            }
+            if(name === 'Mr. John') {
+                document.getElementById('teacher-status-badge').className = "stat-num";
+                document.getElementById('teacher-status-badge').style.color = "var(--accent-green)";
+                document.getElementById('teacher-status-badge').innerText = "PRESENT (7:12 AM)";
+            }
+        }
+
+        function addParentCredit() {
+            let current = parseFloat(localStorage.getItem('studentBalance'));
+            current += 50;
+            localStorage.setItem('studentBalance', current);
+            updateUIElements();
+        }
+
+        function addToCart(amount, itemName) {
+            currentCartAmount = amount;
+            document.getElementById('cart-total').innerText = amount;
+            document.getElementById('canteen-status').innerText = `Selected: ${itemName}`;
+            document.getElementById('canteen-status').style.color = "white";
+        }
+
+        function processCanteenPayment() {
+            if(currentCartAmount === 0) {
+                document.getElementById('canteen-status').innerText = "❌ Please select a menu item first.";
+                document.getElementById('canteen-status').style.color = "var(--accent-red)";
+                return;
+            }
+            let bal = parseFloat(localStorage.getItem('studentBalance'));
+            if(bal >= currentCartAmount) {
+                bal -= currentCartAmount;
+                localStorage.setItem('studentBalance', bal);
+                
+                let rev = parseInt(localStorage.getItem('canteenRevenue'));
+                rev += currentCartAmount;
+                localStorage.setItem('canteenRevenue', rev);
+
+                document.getElementById('canteen-status').innerText = "✅ Payment Approved! Enjoy lunch.";
+                document.getElementById('canteen-status').style.color = "var(--accent-green)";
+                
+                const tbody = document.getElementById('admin-log-table');
+                tbody.innerHTML = `<tr><td><strong>Ahmad Ali</strong></td><td>Student</td><td>Canteen Purchase Deducted</td><td>Live</td><td><span class="badge badge-green">Approved</span></td></tr>` + tbody.innerHTML;
+                
+                currentCartAmount = 0;
+                document.getElementById('cart-total').innerText = "0";
+                updateUIElements();
+            } else {
+                document.getElementById('canteen-status').innerText = "❌ Transaction Declined: Insufficient Card Funds.";
+                document.getElementById('canteen-status').style.color = "var(--accent-red)";
+            }
+        }
+
+        function simulateLibraryCheckout() {
+            document.getElementById('lib-checkout-msg').innerText = "✅ Book Linked! Title: 'The History of Qatar' checked out to Ahmad Ali.";
+            document.getElementById('book-qatar-status').className = "badge badge-red";
+            document.getElementById('book-qatar-status').innerText = "● Out (Ahmad Ali)";
+            document.getElementById('lib-out-count').innerText = "183";
+
+            const tbody = document.getElementById('admin-log-table');
+            tbody.innerHTML = `<tr><td><strong>Ahmad Ali</strong></td><td>Student</td><td>Library Book Out: #978-00611</td><td>Live</td><td><span class="badge badge-green">Checked Out</span></td></tr>` + tbody.innerHTML;
+        }
+
+        // Initialize display configuration metrics instantly
+        updateUIElements();
+    </script>
+</body>
+</html>

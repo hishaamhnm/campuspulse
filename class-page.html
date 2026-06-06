@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"><title>Class Page</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="sidebar">
+        <div class="brand"><div class="brand-pulse"></div>Campus Pulse</div>
+        <div class="tagline">One card. Connected campus.</div>
+        <div class="nav-links">
+            <a href="admin-panel.html" class="nav-item">8. Admin Panel</a>
+            <a href="gate-scanner.html" class="nav-item">1. Gate Scanner</a>
+            <a href="class-page.html" class="nav-item active">7. Class Page</a>
+            <a href="teacher-profile.html" class="nav-item">5. Teacher Profile</a>
+            <a href="parent-portal.html" class="nav-item">6. Parent Portal</a>
+            <a href="canteen.html" class="nav-item">4. Canteen POS</a>
+            <a href="library-checkout.html" class="nav-item">2. Library Checkout</a>
+            <a href="library-dashboard.html" class="nav-item">3. Library Inventory</a>
+        </div>
+    </div>
+    <div class="main-content">
+        <h1>Classroom Hub: Grade 10 - Mathematics</h1>
+        <div class="card">
+            <h2>Automated Morning Attendance Sync</h2>
+            <table>
+                <thead><tr><th>Student ID</th><th>Name</th><th>Assigned Desk</th><th>Gate Scan Status</th></tr></thead>
+                <tbody>
+                    <tr><td>#8841</td><td>Ahmad Ali</td><td>Row 1, Desk 3</td><td><span class="badge" id="ahmad-badge">Loading Matrix...</span></td></tr>
+                    <tr><td>#8842</td><td>Fatima Al-Thani</td><td>Row 3, Desk 1</td><td><span class="badge badge-green">Present (7:05 AM)</span></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <script type="module">
+        import { fetchCloudState } from "./shared.js";
+        
+        const data = await fetchCloudState();
+        if(data) {
+            const b = document.getElementById('ahmad-badge');
+            if(data.ahmadAttendance === 'Late') { 
+                b.className = "badge badge-yellow"; b.innerText = "Late Entry (7:45 AM)"; 
+            } else { 
+                b.className = "badge badge-red"; b.innerText = "Absent (No Gate Log)"; 
+            }
+        }
+    </script>
+</body>
+</html>

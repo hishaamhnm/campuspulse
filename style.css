@@ -1,0 +1,183 @@
+:root {
+    --bg-dark: #04080f;
+    --panel-dark: #0f1a2c;
+    --accent-blue: #507dbc;
+    --accent-light: #a1c6ea;
+    --accent-green: #10b981;
+    --accent-red: #ef4444;
+    --text-main: #f8fafc;
+    --text-muted: #a1c6ea;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Roboto, sans-serif;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* Sidebar Styling */
+.sidebar {
+    width: 260px;
+    background-color: var(--panel-dark);
+    border-right: 1px solid rgba(161, 198, 234, 0.2);
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+}
+
+.brand {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--text-main);
+    margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.brand-pulse {
+    width: 12px;
+    height: 12px;
+    background-color: var(--accent-light);
+    border-radius: 50%;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(0.9); opacity: 0.7; }
+    50% { transform: scale(1.2); opacity: 1; }
+    100% { transform: scale(0.9); opacity: 0.7; }
+}
+
+.tagline {
+    font-size: 0.75rem;
+    color: var(--accent-light);
+    margin-bottom: 30px;
+    font-style: italic;
+    opacity: 0.8;
+}
+
+.nav-links {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.nav-item {
+    display: block;
+    padding: 12px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--text-main);
+    text-decoration: none;
+    transition: all 0.2s ease;
+    font-weight: 500;
+    border-left: 3px solid transparent;
+}
+
+.nav-item:hover, .nav-item.active {
+    background-color: var(--accent-blue);
+    color: var(--text-main);
+    border-left: 3px solid var(--accent-light);
+}
+
+/* Main Display Canvas */
+.main-content {
+    flex: 1;
+    padding: 40px;
+    overflow-y: auto;
+}
+
+/* Dashboard Components */
+h1 { margin-bottom: 25px; font-size: 2rem; color: var(--accent-light); }
+h2 { margin-bottom: 15px; color: var(--text-main); font-weight: 600; }
+
+.grid-3 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.card {
+    background-color: var(--panel-dark);
+    border: 1px solid rgba(161, 198, 234, 0.1);
+    padding: 20px;
+    border-radius: 12px;
+}
+
+.stat-num {
+    font-size: 2.2rem;
+    font-weight: bold;
+    color: var(--accent-light);
+    margin-top: 5px;
+}
+
+/* Tables */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+    background-color: var(--panel-dark);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+th, td {
+    padding: 14px 20px;
+    text-align: left;
+    border-bottom: 1px solid rgba(161, 198, 234, 0.1);
+}
+
+th { background-color: rgba(80, 125, 188, 0.2); color: var(--accent-light); font-weight: 600; }
+
+/* Status Badges & Buttons */
+.badge {
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+.badge-green { background: rgba(16, 185, 129, 0.2); color: var(--accent-green); }
+.badge-red { background: rgba(239, 68, 68, 0.2); color: var(--accent-red); }
+.badge-yellow { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+
+.btn {
+    background-color: var(--accent-blue);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.2s;
+}
+.btn:hover { background-color: #3b6da8; }
+.btn-simulate {
+    background-color: transparent;
+    border: 2px dashed var(--accent-light);
+    color: var(--accent-light);
+    margin-top: 10px;
+}
+.btn-simulate:hover { background: rgba(161, 198, 234, 0.1); }
+
+.canteen-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    background: var(--panel-dark);
+    border: 1px solid rgba(161, 198, 234, 0.1);
+    border-radius: 8px;
+    margin-bottom: 10px;
+}

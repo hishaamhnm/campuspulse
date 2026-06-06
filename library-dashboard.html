@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Library Inventory & Management</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="sidebar">
+        <div class="brand"><div class="brand-pulse"></div>Campus Pulse</div>
+        <div class="tagline">One card. Connected campus.</div>
+        <div class="nav-links">
+            <a href="admin-panel.html" class="nav-item">8. Admin Panel</a>
+            <a href="gate-scanner.html" class="nav-item">1. Gate Scanner</a>
+            <a href="canteen.html" class="nav-item">4a. Canteen POS</a>
+            <a href="canteen-dashboard.html" class="nav-item">4b. Canteen Management</a>
+            <a href="library-checkout.html" class="nav-item">2. Library Checkout</a>
+            <a href="library-dashboard.html" class="nav-item active">3. Library Inventory</a>
+            <a href="teacher-profile.html" class="nav-item">5. Teacher Profile</a>
+            <a href="parent-portal.html" class="nav-item">6. Parent Portal</a>
+            <a href="class-page.html" class="nav-item">7. Class Page</a>
+        </div>
+    </div>
+
+    <div class="main-content" style="padding-bottom: 60px;">
+        <h1>Library Administrative Control Panel</h1>
+        
+        <div style="display: flex; gap: 30px; margin-bottom: 30px;">
+            <!-- Left Side Add Books -->
+            <div style="flex: 1;">
+                <div class="card">
+                    <h2>Catalog New Media Asset</h2>
+                    <div style="display:flex; flex-direction:column; gap:12px; margin-top:15px;">
+                        <input type="text" id="bookTitle" placeholder="Book Title (e.g. Quantum Physics)" style="width:100%; padding:10px; border-radius:6px; background:var(--bg-dark); border:1px solid rgba(161,198,234,0.3); color:white;">
+                        <input type="text" id="bookIsbn" placeholder="ISBN-11 Code (e.g. 978-0552)" style="width:100%; padding:10px; border-radius:6px; background:var(--bg-dark); border:1px solid rgba(161,198,234,0.3); color:white;">
+                        <button class="btn" onclick="submitNewBook()">➕ Append to Catalog</button>
+                        <p id="lib-dash-status" style="font-weight:bold; text-align:center; font-size:0.9rem; margin:0; min-height:18px;"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Side Live Media Stocks -->
+            <div style="flex: 2;" class="card">
+                <h2>Live Media Catalog Records</h2>
+                <table>
+                    <thead>
+                        <tr><th>Book Title Asset</th><th>ISBN Code</th><th>Status Index</th></tr>
+                    </thead>
+                    <tbody id="books-table-body">
+                        <tr><td colspan="3" style="text-align:center;">Querying inventory matrices...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Section 1: Active Loan Tracking Matrix -->
+        <div class="card" style="margin-bottom: 30px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h2>Live Active Loans (Currently Out)</h2>
+                <button class="btn" style="background-color: var(--accent-red);" onclick="triggerLeaseReset()">🗑️ Purge Active List</button>
+            </div>
+            <table>
+                <thead>
+                    <tr><th>Lease ID</th><th>Borrower Cardholder</th><th>Book Title</th><th>Barcode ISBN</th><th>Borrow Date</th><th>Due Date</th></tr>
+                </thead>
+                <tbody id="leases-table-body">
+                    <tr><td colspan="6" style="text-align:center; color:var(--text-muted);">Awaiting network database streams...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Section 2: Complete Checkout & Return History Log -->
+        <div class="card">
+            <h2>Historical Transaction Logs (All Checked In / Returned Assets)</h2>
+            <table>
+                <thead>
+                    <tr><th>User Identity</th><th>Role</th><th>Action Context Descriptor</th><th>Log Details / Timestamp</th><th>Status Index</th></tr>
+                </thead>
+                <tbody id="history-table-body">
+                    <tr><td colspan="5" style="text-align:center; color:var(--text-muted);">Reading historical log arrays...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script type="module">
+        import { fetchCloudState, updateLibraryBooksCloud, clearAllLeasesCloud, initializeDatabase } from "./shared.js";
+        await initializeDatabase();
+
+        let globalBooksBuffer = [];
+
+        window.renderLibraryDashboards = async function() {
+            const data = await fetchCloudState();
+            if (data) {
+                globalBooksBuffer = data.libraryBooks || [];
+                
+                // 1. Render Catalog Books Table
+                const bBody = document.getElementById('books-table-body');
+                if (globalBooksBuffer.length === 0) {
+                    bBody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:var(--text-muted)">No registered assets discovered.</td></tr>`;
+                } else {
+                    bBody.innerHTML = globalBooksBuffer.map(book => {
+                        const isOut = book.status === "Checked Out";
+                        return `
+                            <tr>
+                                <td><strong>${book.title}</strong></td>
+                                <td><span style="font-family:monospace; color:var(--text-muted);">${book.isbn}</span></td>
+                                <td><span class="badge ${isOut ? 'badge-yellow' : 'badge-green'}">${book.status}</span></td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
+
+                // 2. Render Active Lease Table (Books currently checked out)
+                const lBody = document.getElementById('leases-table-body');
+                const historicalLeases = data.libraryLeases || [];
+                
+                if (historicalLeases.length === 0) {
+                    lBody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-muted);">No books are out on loan right now.</td></tr>`;
+                } else {
+                    lBody.innerHTML = historicalLeases.map(lease => `
+                        <tr>
+                            <td><span style="font-family:monospace; color:var(--accent-light);">${lease.leaseId}</span></td>
+                            <td><strong>${lease.borrower}</strong> <small style="opacity:0.6;">(${lease.role})</small></td>
+                            <td>${lease.bookTitle}</td>
+                            <td><span style="font-family:monospace;">${lease.isbn}</span></td>
+                            <td>${lease.borrowDate}</td>
+                            <td><strong style="color:#f59e0b;">${lease.dueDate}</strong></td>
+                        </tr>
+                    `).reverse().join(''); 
+                }
+
+                // 3. Render Historical Audit Logs Matrix (Filtered specifically to target Library systems)
+                const hBody = document.getElementById('history-table-body');
+                const systemWideLogs = data.adminLogs || [];
+                
+                // Parse out actions containing "Library Loan" or "Library In" to populate the window
+                const libraryFilteredLogs = systemWideLogs.filter(log => 
+                    log.action && (log.action.includes("Library Loan:") || log.action.includes("Library In:"))
+                );
+
+                if (libraryFilteredLogs.length === 0) {
+                    hBody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--text-muted);">No loan or return entries recorded in history yet.</td></tr>`;
+                } else {
+                    hBody.innerHTML = libraryFilteredLogs.map(log => {
+                        const isReturn = log.action.startsWith("Library In:");
+                        return `
+                            <tr>
+                                <td><strong>${log.user}</strong></td>
+                                <td><span style="font-size:0.85rem; opacity:0.8;">${log.role}</span></td>
+                                <td>
+                                    <span style="color: ${isReturn ? 'var(--accent-green)' : '#f59e0b'}; font-weight:600;">
+                                        ${isReturn ? '↩️ Returned' : '📖 Borrowed'}
+                                    </span> 
+                                    - ${log.action.replace("Library Loan: ", "").replace("Library In: ", "")}
+                                </td>
+                                <td><small style="font-family:monospace; color:var(--text-muted);">${log.context} @ ${log.timestamp}</small></td>
+                                <td><span class="badge ${log.statusClass || (isReturn ? 'badge-green' : 'badge-yellow')}">${log.statusText || 'Processed'}</span></td>
+                            </tr>
+                        `;
+                    }).reverse().join(''); // Shows newest activities first
+                }
+            }
+        }
+
+        window.submitNewBook = async function() {
+            const title = document.getElementById('bookTitle').value.trim();
+            const isbn = document.getElementById('bookIsbn').value.trim();
+            const statusLabel = document.getElementById('lib-dash-status');
+
+            if (!title || !isbn) {
+                statusLabel.innerText = "❌ Please fulfill both input fields.";
+                statusLabel.style.color = "var(--accent-red)";
+                return;
+            }
+
+            statusLabel.innerText = "⌛ Pushing to cloud node...";
+            statusLabel.style.color = "white";
+
+            globalBooksBuffer.push({ title, isbn, status: "Available" });
+            await updateLibraryBooksCloud(globalBooksBuffer);
+
+            statusLabel.innerText = "✅ Book created successfully!";
+            statusLabel.style.color = "var(--accent-green)";
+
+            document.getElementById('bookTitle').value = "";
+            document.getElementById('bookIsbn').value = "";
+            await window.renderLibraryDashboards();
+        }
+
+        window.triggerLeaseReset = async function() {
+            if(confirm("Are you sure you want to completely clear out all tracking borrow records? This will clear history and mark all books back to available status.")) {
+                const statusLabel = document.getElementById('lib-dash-status');
+                statusLabel.innerText = "⌛ Restoring catalog balances...";
+                statusLabel.style.color = "white";
+
+                const resetBooksArray = globalBooksBuffer.map(book => ({ ...book, status: "Available" }));
+                
+                await updateLibraryBooksCloud(resetBooksArray);
+                await clearAllLeasesCloud();
+
+                statusLabel.innerText = "🗑️ Leases purged and catalog items restored!";
+                statusLabel.style.color = "var(--accent-green)";
+                await window.renderLibraryDashboards();
+            }
+        }
+
+        // Live refresh loops the interface view screens every 3 seconds
+        setInterval(window.renderLibraryDashboards, 3000);
+        await window.renderLibraryDashboards();
+    </script>
+</body>
+</html>

@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>System Admin Auditing Panel</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .filter-bar {
+            display: flex;
+            gap: 15px;
+            background: var(--panel-dark);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(161, 198, 234, 0.1);
+            align-items: center;
+        }
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .filter-group label {
+            font-size: 0.75rem;
+            color: var(--accent-light);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .filter-select {
+            background: var(--bg-dark);
+            border: 1px solid rgba(161, 198, 234, 0.3);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            outline: none;
+            cursor: pointer;
+            min-width: 160px;
+        }
+        .filter-select:focus {
+            border-color: var(--accent-blue);
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="brand"><div class="brand-pulse"></div>Campus Pulse</div>
+        <div class="tagline">One card. Connected campus.</div>
+        <div class="nav-links">
+            <a href="admin-panel.html" class="nav-item active">8. Admin Panel</a>
+            <a href="gate-scanner.html" class="nav-item">1. Gate Scanner</a>
+            <a href="canteen.html" class="nav-item">4a. Canteen POS</a>
+            <a href="canteen-dashboard.html" class="nav-item">4b. Canteen Management</a>
+            <a href="library-checkout.html" class="nav-item">2. Library Checkout</a>
+            <a href="library-dashboard.html" class="nav-item">3. Library Inventory</a>
+            <a href="teacher-profile.html" class="nav-item">5. Teacher Profile</a>
+            <a href="parent-portal.html" class="nav-item">6. Parent Portal</a>
+            <a href="class-page.html" class="nav-item">7. Class Page</a>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <h1>Central Security & Auditing Logs</h1>
+        
+        <!-- Interactive Filter Control Bar -->
+        <div class="filter-bar">
+            <div class="filter-group">
+                <label>Filter by Role</label>
+                <select id="roleFilter" class="filter-select" onchange="applyLogFilters()">
+                    <option value="ALL">All Roles (Students & Teachers)</option>
+                    <option value="Student">Students Only</option>
+                    <option value="Teacher">Teachers Only</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label>Filter by Activity Action</label>
+                <select id="actionFilter" class="filter-select" onchange="applyLogFilters()">
+                    <option value="ALL">All Actions</option>
+                    <option value="CANTEEN">Canteen Purchases</option>
+                    <option value="GATE">Enter School (Gate)</option>
+                </select>
+            </div>
+            
+            <div style="margin-left: auto; color: var(--text-muted); font-size: 0.85rem;" id="filter-count">
+                Loading records...
+            </div>
+        </div>
+
+        <!-- Master Log Table Card -->
+        <div class="card">
+            <h2>Real-Time Cloud Audit Stream</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>User Cardholder</th>
+                        <th>Role Type</th>
+                        <th>Action Event</th>
+                        <th>Context Meta</th>
+                        <th>Status Route</th>
+                    </tr>
+                </thead>
+                <tbody id="admin-log-table">
+                    <tr><td colspan="6" style="text-align:center;">Querying matrix event stream logs...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script type="module">
+        import { fetchCloudState, initializeDatabase } from "./shared.js";
+        await initializeDatabase();
+
+        let masterLogsCache = [];
+
+        async function fetchAndCacheLogs() {
+            const data = await fetchCloudState();
+            if (data && data.adminLogs) {
+                masterLogsCache = data.adminLogs;
+                window.applyLogFilters();
+            } else {
+                document.getElementById('admin-log-table').innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-muted);">No log traces located in cloud state.</td></tr>`;
+                document.getElementById('filter-count').innerText = "0 records found";
+            }
+        }
+
+        window.applyLogFilters = function() {
+            const selectedRole = document.getElementById('roleFilter').value;
+            const selectedAction = document.getElementById('actionFilter').value;
+            const tbody = document.getElementById('admin-log-table');
+
+            // Filter logic matching your exact card scanner outputs
+            const filteredLogs = masterLogsCache.filter(log => {
+                // 1. Role Filter Condition
+                const matchesRole = (selectedRole === "ALL") || (log.role === selectedRole);
+
+                // 2. Action Filter Condition
+                let matchesAction = false;
+                if (selectedAction === "ALL") {
+                    matchesAction = true;
+                } else if (selectedAction === "CANTEEN") {
+                    // Catches "POS Purchase: ..." text structures
+                    matchesAction = log.action && log.action.toLowerCase().includes("canteen") || log.action.toLowerCase().includes("pos");
+                } else if (selectedAction === "GATE") {
+                    // Catches "Gate Check-In" entries
+                    matchesAction = log.action && log.action.toLowerCase().includes("gate");
+                }
+
+                return matchesRole && matchesAction;
+            });
+
+            // Display count status update
+            document.getElementById('filter-count').innerText = `${filteredLogs.length} of ${masterLogsCache.length} records displaying`;
+
+            if (filteredLogs.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding: 20px;">No logs match your selected filter matrices.</td></tr>`;
+                return;
+            }
+
+            // Render table markup rows (newest items on top)
+            tbody.innerHTML = filteredLogs.map(log => {
+                const roleBadge = log.role === 'Teacher' ? 'badge-green' : 'badge-yellow';
+                return `
+                    <tr>
+                        <td style="font-family:monospace; color:var(--text-muted);">${log.timestamp || '00:00:00'}</td>
+                        <td><strong>${log.user}</strong></td>
+                        <td><span class="badge ${roleBadge}">${log.role}</span></td>
+                        <td><code>${log.action}</code></td>
+                        <td>${log.context}</td>
+                        <td><span class="badge ${log.statusClass || 'badge-green'}">${log.statusText || 'Success'}</span></td>
+                    </tr>
+                `;
+            }).reverse().join('');
+        };
+
+        // Initial fetch on page initialization
+        await fetchAndCacheLogs();
+        
+        // Optional: Poll every 4 seconds to catch background live updates during your pitch
+        setInterval(fetchAndCacheLogs, 4000);
+    </script>
+</body>
+</html>

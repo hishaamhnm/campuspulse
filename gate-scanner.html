@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"><title>Turnstile Gate Scanner</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .layout-container { display: flex; gap: 30px; justify-content: center; align-items: flex-start; }
+        
+        /* Pinned Global Hardware Emulation Interface CSS */
+        .fixed-hardware-terminal {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 320px;
+            background: var(--panel-dark);
+            border: 2px solid var(--accent-blue);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            border-radius: 12px;
+            padding: 15px;
+            z-index: 9999;
+        }
+        .simulation-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        .btn-card-tap {
+            background-color: var(--bg-dark); border: 1px solid var(--accent-light);
+            color: var(--accent-light); padding: 12px 10px; border-radius: 6px;
+            cursor: pointer; font-size: 0.85rem; text-align: left; transition: all 0.2s ease;
+        }
+        .btn-card-tap:hover { background-color: var(--accent-blue); color: white; border-color: var(--accent-blue); }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="brand"><div class="brand-pulse"></div>Campus Pulse</div>
+        <div class="tagline">One card. Connected campus.</div>
+        <div class="nav-links">
+            <a href="admin-panel.html" class="nav-item">8. Admin Panel</a>
+            <a href="gate-scanner.html" class="nav-item active">1. Gate Scanner</a>
+            <a href="canteen.html" class="nav-item">4a. Canteen POS</a>
+            <a href="canteen-dashboard.html" class="nav-item">4b. Canteen Management</a>
+            <a href="library-checkout.html" class="nav-item">2. Library Checkout</a>
+            <a href="library-dashboard.html" class="nav-item">3. Library Inventory</a>
+            <a href="teacher-profile.html" class="nav-item">5. Teacher Profile</a>
+            <a href="parent-portal.html" class="nav-item">6. Parent Portal</a>
+            <a href="class-page.html" class="nav-item">7. Class Page</a>
+        </div>
+    </div>
+    <div class="main-content">
+        <h1>Campus Entry Access Gate</h1>
+        <div class="layout-container">
+            <div class="card" style="width: 480px; min-height: 200px;">
+                <h2>Turnstile Scanner Interface</h2>
+                <p style="margin-top: 15px; color: var(--text-muted); text-align: center;">Approach perimeter scanner with smart card</p>
+                <p id="gate-msg" style="font-weight:bold; color:var(--text-muted); text-align:center; margin-top:30px; min-height:24px;">Awaiting terminal detection event...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- PINNED FIXED BOTTOM RIGHT HARDWARE PANEL -->
+    <div class="fixed-hardware-terminal">
+        <h3 style="font-size:0.9rem; margin:0; color:var(--accent-light); display:flex; align-items:center; gap:8px;">
+            <div class="brand-pulse" style="width:8px; height:8px;"></div> 📟 Access Control Scanner
+        </h3>
+        <p style="font-size:0.75rem; color:var(--text-muted); margin: 4px 0 8px 0;">Tap card to register campus turnstile entrance:</p>
+        <div class="simulation-grid">
+            <button class="btn-card-tap" onclick="scanGateCard('Ahmad Ali', 'Student')">🧑 Ahmad (Std)</button>
+            <button class="btn-card-tap" onclick="scanGateCard('Fatima Al-Thani', 'Student')">👩 Fatima (Std)</button>
+            <button class="btn-card-tap" onclick="scanGateCard('Zayed Al-Kuwari', 'Student')">👦 Zayed (Std)</button>
+            <button class="btn-card-tap" onclick="scanGateCard('Mr. John', 'Teacher')">👨 Mr. John (Tchr)</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { updateCloudField, logToAdminCloud } from "./shared.js";
+
+        window.scanGateCard = async function(userName, userRole) {
+            document.getElementById('gate-msg').innerText = "⌛ Authorizing entry parameters...";
+            document.getElementById('gate-msg').style.color = "white";
+
+            if (userName === "Ahmad Ali") {
+                await updateCloudField('ahmadAttendance', 'Present');
+            } else if (userName === "Mr. John") {
+                await updateCloudField('johnAttendance', 'Present');
+            }
+
+            await logToAdminCloud(userName, userRole, "Gate Check-In", "Main Turnstile", "badge-green", "Authorized");
+            
+            document.getElementById('gate-msg').innerHTML = `<span style="color:var(--accent-green)">✅ Welcome, ${userName}! Access Granted.</span>`;
+        }
+    </script>
+</body>
+</html>

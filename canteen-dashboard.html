@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Canteen Inventory Management - Campus Pulse</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .dashboard-layout {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 30px;
+            margin-top: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            background: var(--bg-dark);
+            border: 1px solid rgba(161,198,234,0.2);
+            border-radius: 6px;
+            color: white;
+            outline: none;
+        }
+        .form-control:focus {
+            border-color: var(--accent-blue);
+        }
+        .action-link-btn {
+            background: transparent;
+            border: none;
+            color: var(--accent-light);
+            cursor: pointer;
+            text-decoration: underline;
+            font-weight: bold;
+            margin-right: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="brand"><div class="brand-pulse"></div>Campus Pulse</div>
+        <div class="tagline">One card. Connected campus.</div>
+        <div class="nav-links">
+            <a href="admin-panel.html" class="nav-item">8. Admin Panel</a>
+            <a href="gate-scanner.html" class="nav-item">1. Gate Scanner</a>
+            <a href="canteen.html" class="nav-item">4a. Canteen POS</a>
+            <a href="canteen-dashboard.html" class="nav-item active">4b. Canteen Management</a>
+            <a href="library-checkout.html" class="nav-item">2. Library Checkout</a>
+            <a href="library-dashboard.html" class="nav-item">3. Library Inventory</a>
+            <a href="teacher-profile.html" class="nav-item">5. Teacher Profile</a>
+            <a href="parent-portal.html" class="nav-item">6. Parent Portal</a>
+            <a href="class-page.html" class="nav-item">7. Class Page</a>
+        </div>
+    </div>
+
+    <div class="main-content" style="padding-bottom: 80px;">
+        <h1>Canteen Stock & Menu Management</h1>
+        
+        <div class="dashboard-layout">
+            <div class="card">
+                <h2 id="form-panel-title" style="margin-top:0; color:var(--accent-light);">Add / Edit Item</h2>
+                
+                <div class="form-group" style="background: rgba(255,255,255,0.03); padding: 10px; border-radius: 6px; border: 1px dashed rgba(161,198,234,0.2);">
+                    <label style="color: var(--accent-blue);">⚡ Quick Edit Drop-down</label>
+                    <select id="dropdown-select-item" class="form-control" onchange="handleDropdownSelection(this.value)">
+                        <option value="-1">-- Choose Existing Item to Edit --</option>
+                    </select>
+                </div>
+
+                <form id="menu-item-form" onsubmit="saveInventoryItem(event)" style="margin-top: 15px;">
+                    <input type="hidden" id="edit-item-index" value="-1">
+
+                    <div class="form-group">
+                        <label>Item Name</label>
+                        <input type="text" id="input-item-name" class="form-control" placeholder="e.g. Turkey Sandwich" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Price (QAR)</label>
+                        <input type="number" id="input-item-price" class="form-control" placeholder="e.g. 10" min="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Stock Available Amount</label>
+                        <input type="number" id="input-item-stock" class="form-control" placeholder="e.g. 25" min="0" required>
+                    </div>
+                    
+                    <div style="display:flex; gap:10px; margin-top:10px;">
+                        <button type="button" id="btn-cancel-edit" class="btn" style="background-color: var(--bg-dark); border:1px solid rgba(255,255,255,0.1); display:none;" onclick="resetFormState()">Cancel</button>
+                        <button type="submit" id="btn-submit-form" class="btn" style="background-color: var(--accent-blue); flex:1;">💾 Save Menu Item</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="card">
+                <h2>Active Stock Database List</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Item Name</th>
+                            <th>Price Rate</th>
+                            <th>Stock Available Status</th>
+                            <th style="text-align: right;">Action Tools</th>
+                        </tr>
+                    </thead>
+                    <tbody id="inventory-table-rows">
+                        <tr><td colspan="4" style="text-align:center; color:var(--text-muted);">Syncing cloud system database...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card" style="margin-top: 30px;">
+            <h2 style="color:var(--accent-light);">🧾 Live Canteen Invoice Ledger Logs</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Invoice reference ID</th>
+                        <th>Student Account</th>
+                        <th>Purchased Refreshment Menu Items</th>
+                        <th>Total Deducted Amount</th>
+                    </tr>
+                </thead>
+                <tbody id="invoice-ledger-rows">
+                    <tr><td colspan="4" style="text-align:center; color:var(--text-muted);">Awaiting network ledger logs...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script type="module">
+        import { fetchCloudState, updateCloudField, initializeDatabase } from "./shared.js";
+        await initializeDatabase();
+
+        let currentInventory = [];
+
+        async function reloadDashboardData() {
+            const state = await fetchCloudState();
+            currentInventory = state.canteenInventory || [];
+            renderInventoryTable();
+            populateEditDropdown();
+            renderInvoiceLedger(state.canteenInvoices || []);
+        }
+
+        function renderInventoryTable() {
+            const tbody = document.getElementById('inventory-table-rows');
+            if (currentInventory.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">No items found in active menu registry.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = currentInventory.map((item, index) => {
+                const stockCount = item.stock !== undefined ? item.stock : 0;
+                const outOfStockStyle = stockCount <= 0 ? 'color: #df4759; font-weight: bold;' : '';
+                return `
+                    <tr>
+                        <td><strong>${item.name}</strong></td>
+                        <td style="color:var(--accent-green); font-weight:bold;">${item.price} QAR</td>
+                        <td><span style="${outOfStockStyle}">${stockCount} units</span> available</td>
+                        <td style="text-align: right;">
+                            <button class="action-link-btn" onclick="startItemEdit(${index})">📝 Edit</button>
+                            <button class="btn" style="background-color:var(--accent-red); padding:4px 10px; font-size:0.8rem;" onclick="deleteInventoryItem(${index})">🗑️ Remove</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Populates dropdown items dynamically with stock summary descriptive text instead of emoji icons
+        function populateEditDropdown() {
+            const selectElement = document.getElementById('dropdown-select-item');
+            const currentIndexValue = document.getElementById('edit-item-index').value;
+            
+            let optionsHTML = `<option value="-1">-- Choose Existing Item to Edit --</option>`;
+            currentInventory.forEach((item, index) => {
+                const stockCount = item.stock !== undefined ? item.stock : 0;
+                optionsHTML += `<option value="${index}" ${currentIndexValue == index ? 'selected' : ''}>${item.name} (${item.price} QAR) [Stock: ${stockCount}]</option>`;
+            });
+            selectElement.innerHTML = optionsHTML;
+        }
+
+        window.handleDropdownSelection = function(selectedIndexStr) {
+            const selectedIdx = parseInt(selectedIndexStr);
+            if(selectedIdx >= 0) {
+                startItemEdit(selectedIdx);
+            } else {
+                resetFormState();
+            }
+        }
+
+        function renderInvoiceLedger(invoices) {
+            const ledgerBody = document.getElementById('invoice-ledger-rows');
+            if(invoices.length === 0) {
+                ledgerBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">No checkout sales entries recorded today.</td></tr>`;
+                return;
+            }
+
+            ledgerBody.innerHTML = invoices.map(inv => `
+                <tr>
+                    <td><span style="font-family:monospace; color:var(--accent-light); font-weight:bold;">${inv.id || 'INV-000000'}</span></td>
+                    <td><strong>${inv.customer || 'Anonymous Student'}</strong></td>
+                    <td>${inv.itemsSummary || 'Standard Menu Bundle'}</td>
+                    <td><strong style="color:var(--accent-green);">${inv.totalCharge} QAR</strong></td>
+                </tr>
+            `).reverse().join('');
+        }
+
+        window.startItemEdit = function(index) {
+            const selectedItem = currentInventory[index];
+            
+            document.getElementById('edit-item-index').value = index;
+            document.getElementById('input-item-name').value = selectedItem.name;
+            document.getElementById('input-item-price').value = selectedItem.price;
+            document.getElementById('input-item-stock').value = selectedItem.stock !== undefined ? selectedItem.stock : 0;
+            
+            document.getElementById('form-panel-title').innerText = "📝 Edit Existing Item";
+            document.getElementById('btn-submit-form').innerText = "💾 Update Item";
+            document.getElementById('btn-cancel-edit').style.display = "inline-block";
+
+            document.getElementById('dropdown-select-item').value = index;
+        }
+
+        window.resetFormState = function() {
+            document.getElementById('menu-item-form').reset();
+            document.getElementById('edit-item-index').value = "-1";
+            document.getElementById('form-panel-title').innerText = "Add / Edit Item";
+            document.getElementById('btn-submit-form').innerText = "💾 Save Menu Item";
+            document.getElementById('btn-cancel-edit').style.display = "none";
+            document.getElementById('dropdown-select-item').value = "-1";
+        }
+
+        window.saveInventoryItem = async function(event) {
+            event.preventDefault();
+            
+            const index = parseInt(document.getElementById('edit-item-index').value);
+            const name = document.getElementById('input-item-name').value;
+            const price = parseInt(document.getElementById('input-item-price').value);
+            const stock = parseInt(document.getElementById('input-item-stock').value);
+
+            const updatedNode = { name, price, stock };
+
+            if(index >= 0) {
+                currentInventory[index] = updatedNode;
+            } else {
+                const duplicateIndex = currentInventory.findIndex(i => i.name.toLowerCase() === name.toLowerCase());
+                if(duplicateIndex > -1) {
+                    currentInventory[duplicateIndex] = updatedNode;
+                } else {
+                    currentInventory.push(updatedNode);
+                }
+            }
+
+            await updateCloudField('canteenInventory', currentInventory);
+            resetFormState();
+            await reloadDashboardData();
+        }
+
+        window.deleteInventoryItem = async function(index) {
+            if(!confirm("Are you sure you want to remove this item?")) return;
+            
+            currentInventory.splice(index, 1);
+            await updateCloudField('canteenInventory', currentInventory);
+            resetFormState();
+            await reloadDashboardData();
+        }
+
+        setInterval(reloadDashboardData, 4000);
+        await reloadDashboardData();
+    </script>
+</body>
+</html>
